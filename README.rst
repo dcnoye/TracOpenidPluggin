@@ -6,11 +6,11 @@ OpenID / Oauth2 for Trac 1.5+
 
 Installation
 ============
-python3 setup.py bdist_egg
-cp tracopenid-0.0.1.dev0dev-py3.6.egg plugins/
+|python3 setup.py bdist_egg
+|cp tracopenid-0.0.1.dev0dev-py3.6.egg plugins/
 
 
-    Add to trac.ini:
+Add to trac.ini:
 
 |    [tracopenid]
 |    client_id = XXXXXXXXXXX
