@@ -7,6 +7,8 @@
 from __future__ import absolute_import
 
 from trac.core import Interface
+from trac.web.auth import LoginModule
+from trac.web.api import IAuthenticator
 
 
 class ILoginManager(Interface):

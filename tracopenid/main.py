@@ -5,6 +5,7 @@
 """TracOpenidplugin
 """
 from __future__ import absolute_import
+import re
 from contextlib import contextmanager
 from itertools import chain, count
 from urllib.parse import urlencode
@@ -39,33 +40,32 @@ class TracOpenidPlugin(Component):
     auth_cookie_path = Option('trac', 'auth_cookie_path', '',""" """)
 
     def __init__(self):
+        self.trac_base_url = self.config.get('trac', 'base_url', '')
         self.show_logout_link = not is_component_enabled(self.env, LoginModule)
         self.userdb = UserDatabase(self.env)
 
     def get_active_navigation_item(self, req):
-        return 'tracopenid.login'
+        return 'login'
 
     def get_navigation_items(self, req):
         openid_href = req.href.tracopenid
         path_qs = req.path_info
+        self.env.log.debug("get_nav")
+        self.env.log.debug(openid_href)
+        self.env.log.debug(path_qs)
         if req.query_string:
             path_qs += '?' + req.query_string
         if req.is_authenticated and self.show_logout_link:
             yield ('metanav', 'tracopenid', tag_("logged in as %(user)s",
                    user=Chrome(self.env).authorinfo(req, req.authname)))
-            yield ('metanav', 'tracopenid.logout',
-                   logout_link(openid_href, return_to=path_qs))
+            yield ('metanav', 'logout',
+                   tag.a(_('Logout'), href=req.href.logout()))
         else:
-            yield ('metanav', 'tracopenid.login',
+            yield ('metanav', 'login',
                    tag.a(_('Login'), href=openid_href('login', return_to=path_qs)))
 
     def match_request(self, req):
-        path_info = req.path_info
-        if path_info == '/login' and self.show_logout_link:
-            return True
-        return path_info in ('/tracopenid/login',
-                             '/tracopenid/logout',
-                             '/tracopenid/authorize')
+        return re.match('/(login|logout|authorize)/?$', req.path_info)
 
     def process_request(self, req):
         if req.path_info.endswith('/logout'):
@@ -77,8 +77,7 @@ class TracOpenidPlugin(Component):
             self._do_authorize(req)
 
     def _do_oauth2_login(self, req):
-        trac_base_url = self.config.get('trac', 'base_url', '')
-        redirect_uri = trac_base_url + '/tracopenid/authorize'
+        redirect_uri = self.trac_base_url + '/authorize'
         client_id = self.config.get('tracopenid', 'client_id', '')
         scope = self.config.get('tracopenid', 'scope', '')
         authorize_url = self.config.get('tracopenid', 'authorize_url', '')
@@ -94,13 +93,12 @@ class TracOpenidPlugin(Component):
 
 
     def _do_authorize(self, req):
-        trac_base_url = self.config.get('trac', 'base_url', '')
         client_id = self.config.get('tracopenid', 'client_id', '')
         client_secret = self.config.get('tracopenid', 'client_secret', '')
         userinfo_endpoint = self.config.get('tracopenid', 'userinfo_endpoint', '')
 
         token_url = self.config.get('tracopenid', 'token_url', '')
-        redirect_uri = trac_base_url + '/tracopenid/authorize'
+        redirect_uri = self.trac_base_url + '/authorize'
         session = OAuth2Session(client_id, redirect_uri=redirect_uri,
                                 state=req.session['OAUTH_STATE'])
 
@@ -130,12 +128,12 @@ class TracOpenidPlugin(Component):
             else:
                 self.env.log.debug("Not Authorized")
                 add_warning(req, """Authorization Failed""")
-                return req.redirect(trac_base_url)
+                return req.redirect(self.trac_base_url)
         except Exception as e:
             self.env.log.debug("Auth Failed")
             self.env.log.debug(e)
         
-        return req.redirect(trac_base_url)
+        return req.redirect(self.trac_base_url)
 
 
     def _remember_user(self, req, authname):
@@ -162,16 +160,11 @@ class TracOpenidPlugin(Component):
             return_url += '?' + query
         return return_url
 
-
-
 class AuthCookieManager(LoginModule):
     """Manage the authentication cookie.
 
     This handles setting the trac authentication cookie and updating
     the ``auth_cookie`` table in the trac db.
-
-    XXX: We use the stock ``trac.web.auth.LoginModule`` to do this,
-    however, as you can see, this takes a bit of hacking...
 
     """
     implements(IAuthenticator, ILoginManager)
@@ -180,8 +173,6 @@ class AuthCookieManager(LoginModule):
             self._do_login(req)  # LoginModule._do_login
 
     def forget_user(self, req):
-        # HACK: In trac >= 1.0.2, LoginModule._do_logout does nothing
-        # unless request.method == POST.
         with _temporary_environ(req, REQUEST_METHOD='POST'):
             self._do_logout(req)
 
@@ -212,6 +203,8 @@ def _temporary_environ(req, **kwargs):
         yield req.environ
     finally:
         req.environ = environ
+
+
 
 
 class UserDatabase(Component):

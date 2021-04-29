@@ -34,7 +34,8 @@ setup(
     ],
     entry_points={
         'trac.plugins': [
-            'tracopenid = tracopenid.main',
+            'tracopenid.main = tracopenid.main',
+            'tracopenid.filter = tracopenid.filter',
             ]
     }
 )
