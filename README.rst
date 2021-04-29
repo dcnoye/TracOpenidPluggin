@@ -12,17 +12,25 @@ Description
 Oauth2 plugin for Trac 1.5
 
 
+Prerequisites
+=============
+
+python3+ trac 1.5+
+
 Installation
 ============
 
-|    python3 setup.py bdist_egg
-|    cp tracopenid-0.0.1.dev0dev-py3.6.egg plugins/
+|    python setup.py bdist_egg
+|    cp dist/tracopenid-0.0.1.dev0dev-py3.6.egg trac/plugins 
 
 
 Configuration
 =============
 
 Add to your ``trac.ini``::
+
+  [components]
+  trac.web.auth.loginmodule = disabled
 
   [tracopenid]
   client_id = XXXXXXXXXXX
