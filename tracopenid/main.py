@@ -96,6 +96,7 @@ class TracOpenidPlugin(Component):
         client_id = self.config.get('tracopenid', 'client_id', '')
         client_secret = self.config.get('tracopenid', 'client_secret', '')
         userinfo_endpoint = self.config.get('tracopenid', 'userinfo_endpoint', '')
+        authorized_domains = self.config.get('tracopenid', 'domains', '')
 
         token_url = self.config.get('tracopenid', 'token_url', '')
         redirect_uri = self.trac_base_url + '/authorize'
@@ -116,14 +117,11 @@ class TracOpenidPlugin(Component):
 
         try:
             r = session.get(userinfo_endpoint)
-            self.env.log.debug(r.text)
-            if r.status_code == 200:
-                json_response = r.json()
-                authname = json_response['email']
-                self.env.log.debug(authname)
+            json_response = r.json()
+            authname = json_response['email']
+            if authname.split("@")[1] in authorized_domains :
                 authname = authname.split("@")[0] 
                 req.environ["REMOTE_USER"] = authname
-                self.env.log.debug(json_response)
                 LoginModule._do_login(self, req)
             else:
                 self.env.log.debug("Not Authorized")
