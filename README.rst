@@ -22,7 +22,7 @@ Installation
 
 |    python -mpip install requests_oauthlib
 |    python setup.py bdist_egg
-|    cp dist/tracopenid-0.0.1.dev0dev-py3.6.egg trac/plugins 
+|    cp dist/tracopenid-0.0.1.dev0-py3.11.egg /var/lib/trac/plugins
 
 
 Configuration
