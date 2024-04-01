@@ -1,0 +1,16 @@
+[Unit]
+Description=uWSGI Emperor service
+After=syslog.target
+
+[Service]
+ExecStart=/var/lib/venv3/bin/uwsgi --ini /etc/uwsgi/apps-enabled/trac.ini
+Restart=always
+KillSignal=SIGQUIT
+Type=simple
+NotifyAccess=all
+StandardError=syslog
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target
