@@ -62,7 +62,7 @@ class TracOpenidPlugin(Component):
                    tag.a(_('Logout'), href=req.href.logout()))
         else:
             yield ('metanav', 'login',
-                   tag.a(_('Login'), href=openid_href('login', return_to=path_qs)))
+                   tag.a(_('Login'), href=req.href.login()))
 
     def match_request(self, req):
         return re.match('/(login|logout|authorize)/?$', req.path_info)
