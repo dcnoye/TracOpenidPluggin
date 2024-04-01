@@ -1,5 +1,5 @@
 =============================
-OpenID / Oauth2 for Trac 1.5+
+OpenID / Oauth2 for Trac 1.6
 =============================
 
 |trac versions|
@@ -9,17 +9,18 @@ Description
 ***********
 
 
-Oauth2 plugin for Trac 1.5
+Oauth2 plugin for Trac 1.6
 
 
 Prerequisites
 =============
 
-python3+ trac 1.5+
+python3 trac 1.6
 
 Installation
 ============
 
+|    python -mpip install requests_oauthlib
 |    python setup.py bdist_egg
 |    cp dist/tracopenid-0.0.1.dev0dev-py3.6.egg trac/plugins 
 
@@ -39,6 +40,7 @@ Add to your ``trac.ini``::
   authorize_url = https://accounts.google.com/o/oauth2/auth
   userinfo_endpoint = https://openidconnect.googleapis.com/v1/userinfo
   token_url = https://accounts.google.com/o/oauth2/token
+  authorized_domains = gmail.com
 
 
   [trac]
@@ -54,5 +56,5 @@ Add documentation
 Add references
 
 .. |trac versions| image::
-      https://img.shields.io/badge/trac-1.5-blue.svg
+      https://img.shields.io/badge/trac-1.6-blue.svg
    :target: http://trac.edgewall.org/
