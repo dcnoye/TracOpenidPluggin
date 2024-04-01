@@ -96,43 +96,43 @@ class TracOpenidPlugin(Component):
         client_id = self.config.get('tracopenid', 'client_id', '')
         client_secret = self.config.get('tracopenid', 'client_secret', '')
         userinfo_endpoint = self.config.get('tracopenid', 'userinfo_endpoint', '')
-        authorized_domains = self.config.get('tracopenid', 'domains', '')
+        authorized_domains = self.config.get('tracopenid', 'authorized_domains', '').split()
 
         token_url = self.config.get('tracopenid', 'token_url', '')
         redirect_uri = self.trac_base_url + '/authorize'
         session = OAuth2Session(client_id, redirect_uri=redirect_uri,
                                 state=req.session['OAUTH_STATE'])
 
-
         try:
+            # Parse the authorization code from the query string
             code = parse_qs(req.query_string)["code"][0]
-        except Exception:
-            raise Exception("Received invalid query parameters.")
+            # Exchange the authorization code for an access token
+            token = session.fetch_token(token_url=token_url,
+                                        client_secret=client_secret,
+                                        code=code)
+            req.environ["oauth_token"] = token
 
-        token = session.fetch_token(token_url=token_url,
-                                    client_secret=client_secret,
-                                    code=code,
-                                    verify=False)
-        req.environ["oauth_token"] = token
-
-        try:
+            # Get user information from the userinfo endpoint
             r = session.get(userinfo_endpoint)
             json_response = r.json()
             authname = json_response['email']
-            if authname.split("@")[1] in authorized_domains :
-                authname = authname.split("@")[0] 
+
+            # Check if the domain of the user's email is in the authorized domains
+            if authname.split("@")[1] in authorized_domains:
+                authname = authname.split("@")[0]
                 req.environ["REMOTE_USER"] = authname
                 LoginModule._do_login(self, req)
             else:
-                self.env.log.debug("Not Authorized")
-                add_warning(req, """Authorization Failed""")
+                self.env.log.warning("Unauthorized domain for user: {0}".format(authname))
+                add_warning(req, _("Authorization Failed: unauthorized domain"))
                 return req.redirect(self.trac_base_url)
-        except Exception as e:
-            self.env.log.debug("Auth Failed")
-            self.env.log.debug(e)
-        
-        return req.redirect(self.trac_base_url)
 
+        except Exception as e:
+            self.env.log.error("Authentication failed: {0}".format(e))
+            add_warning(req, _("Authorization Failed: {0}").format(e))
+            return req.redirect(self.trac_base_url)
+
+        return req.redirect(self.trac_base_url)
 
     def _remember_user(self, req, authname):
         for lm in self.login_managers:
