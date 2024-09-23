@@ -97,6 +97,7 @@ class TracOpenidPlugin(Component):
         client_secret = self.config.get('tracopenid', 'client_secret', '')
         userinfo_endpoint = self.config.get('tracopenid', 'userinfo_endpoint', '')
         authorized_domains = self.config.get('tracopenid', 'authorized_domains', '').split()
+        authorized_emails = [email.strip() for email in self.config.get('tracopenid', 'authorized_emails', '').split(',')]
 
         token_url = self.config.get('tracopenid', 'token_url', '')
         redirect_uri = self.trac_base_url + '/authorize'
@@ -117,11 +118,16 @@ class TracOpenidPlugin(Component):
             json_response = r.json()
             authname = json_response['email']
 
+
             # Check if the domain of the user's email is in the authorized domains
             if authname.split("@")[1] in authorized_domains:
                 authname = authname.split("@")[0]
                 req.environ["REMOTE_USER"] = authname
-                LoginModule._do_login(self, req)
+                LoginModule._do_login(self, req)    
+            elif authname in authorized_emails:
+                authname = f"{authname.split("@")[0]}-guest" 
+                req.environ["REMOTE_USER"] = authname
+                LoginModule._do_login(self, req)  
             else:
                 self.env.log.warning("Unauthorized domain for user: {0}".format(authname))
                 add_warning(req, _("Authorization Failed: unauthorized domain"))
