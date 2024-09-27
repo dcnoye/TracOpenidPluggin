@@ -125,7 +125,7 @@ class TracOpenidPlugin(Component):
                 req.environ["REMOTE_USER"] = authname
                 LoginModule._do_login(self, req)    
             elif authname in authorized_emails:
-                authname = f"{authname.split("@")[0]}-guest" 
+                authname = f"{authname.split('@')[0]}-guest" 
                 req.environ["REMOTE_USER"] = authname
                 LoginModule._do_login(self, req)  
             else:
