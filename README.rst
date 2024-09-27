@@ -41,6 +41,7 @@ Add to your ``trac.ini``::
   userinfo_endpoint = https://openidconnect.googleapis.com/v1/userinfo
   token_url = https://accounts.google.com/o/oauth2/token
   authorized_domains = gmail.com
+  authorized_emails = dc@example.com, alex@example.com
 
 
   [trac]
